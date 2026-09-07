@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Registro Certificados - Dashboard</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f9;
+            color: #1f2937;
+        }
+
+        header {
+            background: #2639b5;
+            color: white;
+            padding: 25px 35px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            opacity: 0.85;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .update-info {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        button {
+            background: #2639b5;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* KPI */
+
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .kpi {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .kpi-title {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .green {
+            color: #16803c;
+        }
+
+        .red {
+            color: #c62828;
+        }
+
+        .blue {
+            color: #2639b5;
+        }
+
+        /* filtros */
+
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            min-width: 200px;
+        }
+
+        /* gráficos */
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-card h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+        }
+
+        /* tabla */
+
+        .table-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow-x: auto;
+        }
+
+        .table-card h2 {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f1f3f8;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 13px;
+        }
+
+        .status {
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-ok {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-bad {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 900px) {
+
+            .kpis {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .kpis {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <h1>📊 Registro Certificados</h1>
+
+    <p>
+        Dashboard de seguimiento y gestión
+    </p>
+
+</header>
+
+<div class="container">
+
+    <div class="topbar">
+
+        <div class="update-info">
+            Última actualización:
+            <strong id="lastUpdate">Cargando...</strong>
+        </div>
+
+        <button onclick="cargarDatos()">
+            🔄 Actualizar datos
+        </button>
+
+    </div>
+
+
+    <!-- KPI -->
+
+    <div class="kpis">
+
+        <div class="kpi">
+
+            <div class="kpi-title">
+                TOTAL DE REGISTROS
+            </div>
+
+            <div
+                class="kpi-value blue"
+                id="totalRegistros">
+                -
+            </div>
+
+        </div>
+
+
+        <div class="kpi">
+
+            <div class="kpi-title">
+                🟢 EN PLAZO (0–2 DÍAS)
+            </div>
+
+            <div
+                class="kpi-value green"
+                id="enPlazo">
+                -
+            </div>
+
+        </div>
+
+
+        <div class="kpi">
+
+            <div class="kpi-title">
+                🔴 FUERA DE PLAZO (3+ DÍAS)
+            </div>
+
+            <div
+                class="kpi-value red"
+                id="fueraPlazo">
+                -
+            </div>
+
+        </div>
+
+
+        <div class="kpi">
+
+            <div class="kpi-title">
+                % EN PLAZO
+            </div>
+
+            <div
+                class="kpi-value blue"
+                id="porcentaje">
+                -
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- filtros -->
+
+    <div class="filters">
+
+        <select id="filtroRegion"
+                onchange="actualizarDashboard()">
+
+            <option value="">
+                Todas las regiones
+            </option>
+
+        </select>
+
+
+        <select id="filtroAnalista"
+                onchange="actualizarDashboard()">
+
+            <option value="">
+                Todos los analistas
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <!-- gráficos -->
+
+    <div class="charts">
+
+        <div class="chart-card">
+
+            <h2>
+                Registros por estado
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="estadoChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <div class="chart-card">
+
+            <h2>
+                Registros por región
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="regionChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <div class="chart-card">
+
+            <h2>
+                Registros por analista
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="analistaChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <div class="chart-card">
+
+            <h2>
+                Distribución por días transcurridos
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="diasChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- tabla -->
+
+    <div class="table-card">
+
+        <h2>
+            Detalle de registros
+        </h2>
+
+        <div id="tablaContainer">
+
+            <div class="loading">
+                Cargando datos...
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const API_URL =
+    "https://script.google.com/macros/s/AKfycbwqhLBmoxeg4tbQQWvwzMOZun0NSEud-aYNqs-_ltvZn4BDi9AVBudLtarY18t0OWEx3Q/exec";
+
+
+let datos = [];
+
+let estadoChart;
+let regionChart;
+let analistaChart;
+let diasChart;
+
+
+/* ================================
+   CARGAR DATOS
+================================ */
+
+async function cargarDatos() {
+
+    try {
+
+        document.getElementById("lastUpdate").textContent =
+            "Actualizando...";
+
+
+        const respuesta = await fetch(API_URL);
+
+        datos = await respuesta.json();
+
+
+        llenarFiltros();
+
+        actualizarDashboard();
+
+
+        const ahora = new Date();
+
+        document.getElementById("lastUpdate").textContent =
+            ahora.toLocaleString("es-CL");
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("lastUpdate").textContent =
+            "Error al cargar datos";
+
+    }
+
+}
+
+
+/* ================================
+   FILTROS
+================================ */
+
+function llenarFiltros() {
+
+    const regiones = [
+        ...new Set(
+            datos
+                .map(d => d["Región"])
+                .filter(Boolean)
+        )
+    ].sort();
+
+
+    const analistas = [
+        ...new Set(
+            datos
+                .map(d => d["Analista a Cargo"])
+                .filter(Boolean)
+        )
+    ].sort();
+
+
+    const regionSelect =
+        document.getElementById("filtroRegion");
+
+    const analistaSelect =
+        document.getElementById("filtroAnalista");
+
+
+    regionSelect.innerHTML =
+        '<option value="">Todas las regiones</option>';
+
+    analistaSelect.innerHTML =
+        '<option value="">Todos los analistas</option>';
+
+
+    regiones.forEach(region => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = region;
+        option.textContent = region;
+
+        regionSelect.appendChild(option);
+
+    });
+
+
+    analistas.forEach(analista => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = analista;
+        option.textContent = analista;
+
+        analistaSelect.appendChild(option);
+
+    });
+
+}
+
+
+/* ================================
+   ACTUALIZAR DASHBOARD
+================================ */
+
+function actualizarDashboard() {
+
+    const region =
+        document.getElementById("filtroRegion").value;
+
+    const analista =
+        document.getElementById("filtroAnalista").value;
+
+
+    const filtrados = datos.filter(d => {
+
+        const coincideRegion =
+            !region ||
+            d["Región"] === region;
+
+        const coincideAnalista =
+            !analista ||
+            d["Analista a Cargo"] === analista;
+
+
+        return coincideRegion && coincideAnalista;
+
+    });
+
+
+    actualizarKPIs(filtrados);
+
+    actualizarGraficos(filtrados);
+
+    actualizarTabla(filtrados);
+
+}
+
+
+/* ================================
+   KPIs
+================================ */
+
+function actualizarKPIs(data) {
+
+    const total = data.length;
+
+
+    const enPlazo = data.filter(d => {
+
+        const dias =
+            Number(d["Días Transcurridos"]);
+
+        return !isNaN(dias) && dias <= 2;
+
+    }).length;
+
+
+    const fueraPlazo = data.filter(d => {
+
+        const dias =
+            Number(d["Días Transcurridos"]);
+
+        return !isNaN(dias) && dias >= 3;
+
+    }).length;
+
+
+    const porcentaje =
+        total > 0
+            ? ((enPlazo / total) * 100).toFixed(1)
+            : 0;
+
+
+    document.getElementById("totalRegistros")
+        .textContent = total;
+
+
+    document.getElementById("enPlazo")
+        .textContent = enPlazo;
+
+
+    document.getElementById("fueraPlazo")
+        .textContent = fueraPlazo;
+
+
+    document.getElementById("porcentaje")
+        .textContent = porcentaje + "%";
+
+}
+
+
+/* ================================
+   GRÁFICOS
+================================ */
+
+function actualizarGraficos(data) {
+
+
+    /* ESTADO */
+
+    const enPlazo =
+        data.filter(d =>
+            Number(d["Días Transcurridos"]) <= 2
+        ).length;
+
+
+    const fueraPlazo =
+        data.filter(d =>
+            Number(d["Días Transcurridos"]) >= 3
+        ).length;
+
+
+    if (estadoChart)
+        estadoChart.destroy();
+
+
+    estadoChart =
+        new Chart(
+
+            document.getElementById("estadoChart"),
+
+            {
+
+                type: "doughnut",
+
+                data: {
+
+                    labels: [
+                        "En plazo",
+                        "Fuera de plazo"
+                    ],
+
+                    datasets: [{
+
+                        data: [
+                            enPlazo,
+                            fueraPlazo
+                        ]
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false
+
+                }
+
+            }
+
+        );
+
+
+    /* REGIONES */
+
+    const regiones = {};
+
+    data.forEach(d => {
+
+        const region =
+            d["Región"] || "Sin región";
+
+        regiones[region] =
+            (regiones[region] || 0) + 1;
+
+    });
+
+
+    if (regionChart)
+        regionChart.destroy();
+
+
+    regionChart =
+        new Chart(
+
+            document.getElementById("regionChart"),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels:
+                        Object.keys(regiones),
+
+                    datasets: [{
+
+                        label: "Registros",
+
+                        data:
+                            Object.values(regiones)
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+
+    /* ANALISTAS */
+
+    const analistas = {};
+
+    data.forEach(d => {
+
+        const analista =
+            d["Analista a Cargo"] ||
+            "Sin analista";
+
+        analistas[analista] =
+            (analistas[analista] || 0) + 1;
+
+    });
+
+
+    if (analistaChart)
+        analistaChart.destroy();
+
+
+    analistaChart =
+        new Chart(
+
+            document.getElementById("analistaChart"),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels:
+                        Object.keys(analistas),
+
+                    datasets: [{
+
+                        label: "Registros",
+
+                        data:
+                            Object.values(analistas)
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+
+    /* DÍAS */
+
+    const dias = {};
+
+    data.forEach(d => {
+
+        const valor =
+            Number(d["Días Transcurridos"]);
+
+        if (!isNaN(valor)) {
+
+            dias[valor] =
+                (dias[valor] || 0) + 1;
+
+        }
+
+    });
+
+
+    const diasOrdenados =
+        Object.keys(dias)
+            .map(Number)
+            .sort((a,b) => a-b);
+
+
+    if (diasChart)
+        diasChart.destroy();
+
+
+    diasChart =
+        new Chart(
+
+            document.getElementById("diasChart"),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels:
+                        diasOrdenados,
+
+                    datasets: [{
+
+                        label: "Registros",
+
+                        data:
+                            diasOrdenados.map(
+                                d => dias[d]
+                            )
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* ================================
+   TABLA
+================================ */
+
+function actualizarTabla(data) {
+
+    const container =
+        document.getElementById("tablaContainer");
+
+
+    if (data.length === 0) {
+
+        container.innerHTML =
+            "<p>No existen registros para los filtros seleccionados.</p>";
+
+        return;
+
+    }
+
+
+    let html = `
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Analista</th>
+
+                    <th>Región</th>
+
+                    <th>Fecha recepción</th>
+
+                    <th>Fecha SBE</th>
+
+                    <th>Días</th>
+
+                    <th>Estado</th>
+
+                    <th>Observación</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+    `;
+
+
+    data.forEach(d => {
+
+        const dias =
+            Number(d["Días Transcurridos"]);
+
+
+        const enPlazo =
+            !isNaN(dias) && dias <= 2;
+
+
+        html += `
+
+            <tr>
+
+                <td>
+                    ${d["Analista a Cargo"] || ""}
+                </td>
+
+                <td>
+                    ${d["Región"] || ""}
+                </td>
+
+                <td>
+                    ${d["Fecha de Recepción Certificado"] || ""}
+                </td>
+
+                <td>
+                    ${d["Fecha de Ingreso a SBE"] || ""}
+                </td>
+
+                <td>
+                    ${d["Días Transcurridos"] || ""}
+                </td>
+
+                <td>
+
+                    <span class="status
+                        ${enPlazo
+                            ? "status-ok"
+                            : "status-bad"}">
+
+                        ${enPlazo
+                            ? "EN PLAZO"
+                            : "FUERA DE PLAZO"}
+
+                    </span>
+
+                </td>
+
+                <td>
+                    ${d["Observación"] || ""}
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+
+    html += `
+
+            </tbody>
+
+        </table>
+
+    `;
+
+
+    container.innerHTML = html;
+
+}
+
+
+/* ================================
+   INICIO
+================================ */
+
+cargarDatos();
+
+
+/* Actualizar cada 5 minutos */
+
+setInterval(
+    cargarDatos,
+    5 * 60 * 1000
+);
+
+</script>
+
+</body>
+</html>
