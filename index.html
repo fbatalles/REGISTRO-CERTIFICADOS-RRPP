@@ -133,6 +133,12 @@
             min-width: 200px;
         }
 
+        /* Filtros de fecha */
+        #filtroMes,
+        #filtroAnio {
+            min-width: 170px;
+        }
+
         /* gráficos */
 
         .charts {
@@ -354,6 +360,24 @@
 
         </select>
 
+        <select id="filtroMes"
+                onchange="actualizarDashboard()">
+
+            <option value="">
+                Todos los meses
+            </option>
+
+        </select>
+
+        <select id="filtroAnio"
+                onchange="actualizarDashboard()">
+
+            <option value="">
+                Todos los años
+            </option>
+
+        </select>
+
     </div>
 
 
@@ -512,7 +536,6 @@ function llenarFiltros() {
         )
     ].sort();
 
-
     const analistas = [
         ...new Set(
             datos
@@ -521,6 +544,18 @@ function llenarFiltros() {
         )
     ].sort();
 
+    // Meses y años se obtienen desde "Fecha de Recepción Certificado"
+    const mesesDisponibles = new Set();
+    const aniosDisponibles = new Set();
+
+    datos.forEach(d => {
+        const fecha = obtenerFechaRecepcion(d["Fecha de Recepción Certificado"]);
+
+        if (fecha) {
+            mesesDisponibles.add(fecha.getMonth() + 1);
+            aniosDisponibles.add(fecha.getFullYear());
+        }
+    });
 
     const regionSelect =
         document.getElementById("filtroRegion");
@@ -528,6 +563,11 @@ function llenarFiltros() {
     const analistaSelect =
         document.getElementById("filtroAnalista");
 
+    const mesSelect =
+        document.getElementById("filtroMes");
+
+    const anioSelect =
+        document.getElementById("filtroAnio");
 
     regionSelect.innerHTML =
         '<option value="">Todas las regiones</option>';
@@ -535,6 +575,11 @@ function llenarFiltros() {
     analistaSelect.innerHTML =
         '<option value="">Todos los analistas</option>';
 
+    mesSelect.innerHTML =
+        '<option value="">Todos los meses</option>';
+
+    anioSelect.innerHTML =
+        '<option value="">Todos los años</option>';
 
     regiones.forEach(region => {
 
@@ -548,7 +593,6 @@ function llenarFiltros() {
 
     });
 
-
     analistas.forEach(analista => {
 
         const option =
@@ -561,6 +605,88 @@ function llenarFiltros() {
 
     });
 
+    const nombresMeses = [
+        "Enero", "Febrero", "Marzo", "Abril",
+        "Mayo", "Junio", "Julio", "Agosto",
+        "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    [...mesesDisponibles]
+        .sort((a, b) => a - b)
+        .forEach(mes => {
+
+            const option =
+                document.createElement("option");
+
+            option.value = mes;
+            option.textContent = nombresMeses[mes - 1];
+
+            mesSelect.appendChild(option);
+
+        });
+
+    [...aniosDisponibles]
+        .sort((a, b) => b - a)
+        .forEach(anio => {
+
+            const option =
+                document.createElement("option");
+
+            option.value = anio;
+            option.textContent = anio;
+
+            anioSelect.appendChild(option);
+
+        });
+
+}
+
+
+/* ================================
+   FECHA DE RECEPCIÓN
+================================ */
+
+function obtenerFechaRecepcion(valor) {
+
+    if (!valor) return null;
+
+    // Si ya es un objeto Date
+    if (valor instanceof Date && !isNaN(valor.getTime())) {
+        return valor;
+    }
+
+    const texto = String(valor).trim();
+
+    // Formato ISO: 2026-08-27 o 2026-08-27T...
+    let match = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+
+    if (match) {
+        const fecha = new Date(
+            Number(match[1]),
+            Number(match[2]) - 1,
+            Number(match[3])
+        );
+
+        return isNaN(fecha.getTime()) ? null : fecha;
+    }
+
+    // Formato habitual en Chile: dd/mm/yyyy o dd-mm-yyyy
+    match = texto.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+
+    if (match) {
+        const fecha = new Date(
+            Number(match[3]),
+            Number(match[2]) - 1,
+            Number(match[1])
+        );
+
+        return isNaN(fecha.getTime()) ? null : fecha;
+    }
+
+    // Último intento: conversión estándar de JavaScript
+    const fecha = new Date(texto);
+
+    return isNaN(fecha.getTime()) ? null : fecha;
 }
 
 
@@ -576,6 +702,11 @@ function actualizarDashboard() {
     const analista =
         document.getElementById("filtroAnalista").value;
 
+    const mes =
+        document.getElementById("filtroMes").value;
+
+    const anio =
+        document.getElementById("filtroAnio").value;
 
     const filtrados = datos.filter(d => {
 
@@ -587,11 +718,31 @@ function actualizarDashboard() {
             !analista ||
             d["Analista a Cargo"] === analista;
 
+        const fechaRecepcion =
+            obtenerFechaRecepcion(
+                d["Fecha de Recepción Certificado"]
+            );
 
-        return coincideRegion && coincideAnalista;
+        const coincideMes =
+            !mes ||
+            (
+                fechaRecepcion &&
+                (fechaRecepcion.getMonth() + 1) === Number(mes)
+            );
+
+        const coincideAnio =
+            !anio ||
+            (
+                fechaRecepcion &&
+                fechaRecepcion.getFullYear() === Number(anio)
+            );
+
+        return coincideRegion &&
+               coincideAnalista &&
+               coincideMes &&
+               coincideAnio;
 
     });
-
 
     actualizarKPIs(filtrados);
 
